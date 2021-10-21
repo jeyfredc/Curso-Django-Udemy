@@ -218,6 +218,24 @@ Para que se puedan leer nuevas aplicaciones en el proyecto en el archivo **base.
 
 `python manage.py runserver --settings=empleados.settings.local`
 
+
+Para poder incluir las aplicaciones que se han ido  creado e instalarlas debemos dirigirnos al archivo **base.py**, dejamos un comentario que hara referencia a las aplicaciones locales y seguido hacemos referencia a la carpeta donde estan instaladas las aplicaciones que en este caso es **applications**, mas el nombre de cada aplicación
+
+```
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    # local apss
+    'applications.departamento',
+    'applications.persona',
+    'applications.home',
+]
+```
+
 que en este ejemplo empleados es el nombre del proyecto, para no tener que ejecutar la anterior linea debemos cambiar la configuración el el archivo **manage.py** especificamente en la siguiente linea `os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'empleados.settings')`, al final vemos que dice `empleados.settings`, pero como la configuración cambio ahora seria `empleados.settings.local`, haciendo este cambio ahora si podriamos ejecutar tan solo
 
 `python manage.py runserver`
@@ -295,7 +313,9 @@ urlpatterns = [
 
 Ahora solo faltaria incluir la aplicacion en el archivo **urls.py** y dentro de la aplicacion para poder leer el template se debe crear una carpeta llamada **templates** y alli incluir el archivo html llamado `prueba.html`, dentro de este si iria todo el html que se quiera incluior
 
-Para poder tener la logica que proporciona django de Modelo Vista Templates, los templates deben estar en una carpeta separada y no mezclada entre las aplicaciones es por esto que a la altura de **manage.py** debe haber una carpeta llamada **templates** para que esta pueda ser leida y ejecuta se debe instalar una libreria llamada **unipath**, se instala con `pip install unipath`
+Para poder tener la logica que proporciona django de Modelo Vista Templates, los templates deben estar en una carpeta separada y no mezclada entre las aplicaciones es por esto que a la altura de **manage.py** debe haber una carpeta llamada **templates** para que esta pueda ser leida y ejecutada se debe instalar una libreria llamada **unipath**, se instala con `pip install unipath`
+
+Las vistas genericas trabajan sobre clases y es importante entender que estas se comunican con una plantilla, un modelo o base de datos, las vistas genericas obtienen el TEMPLATEVIEW que se usa para crear una pantalla html, pero tambien puede obtener LISTVIEW, CREATEVIEW o UPDATEVIEW, estas ultimas ya tendrian una interaccion con el template, con el model y con la base de datos
 
 ACTUALIZACION!! NUEVA VERSION DE DJANGO
 Hola, Django lanzo la versión 3.1 y hay pequeños cambios a considerar para evitar errores.
@@ -333,4 +353,99 @@ por
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from unipath import Path
 BASE_DIR = Path(__file__).ancestor(3)
+```
+
+Como hicimos la instalacion de la libreria unithpath y creamos una carpeta llamada **templates** a la altura de **manage.py**, ahora debemos configurar en el archivo **base.py** la nueva ruta donde tomaremos todos los templates que creemos desde las aplicaciones con esto se cumple con la premisa que todo debe estar separado y de esta forma tambien puede ser reutilizable,buscamos en el archivo la variable TEMPLATES y donde esta DIRS reemplazamos por lo siguiente 
+
+```
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR.child('templates')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+```
+
+Con esta configuración, ahora todo HTML que agreguemos se debe trasladar a la carpeta **templates** creada y para ser mucho mas ordenado para hacer referencia al HTML que pertenece a cada aplicación creamos las carpetas dentro de esta misma llamandolas con el mismo nombre de la aplicación.
+
+Si movemos cualquier html que tengamos dentro de este a una de las carpetas debemos dirigirnos a la aplicación, en este caso un ejemplo **home**, luego en **views.py** y anteriormente teniamos lo siguiente dentro del archivo
+
+```
+from django.shortcuts import render
+
+# Create your views here.
+from django.views.generic import TemplateView
+
+class PruebaView(TemplateView):
+    template_name= 'prueba.html'
+```
+
+pero como ahora tenemos una vista organizada y una carpeta templates con el nombre de la aplicación debemos agregar en este archivo la referencia al nombre de la carpeta donde se encuentra en este caso **prueba.html** de esta forma `home/prueba.html`
+
+```
+from django.shortcuts import render
+
+# Create your views here.
+from django.views.generic import TemplateView
+
+class PruebaView(TemplateView):
+    template_name= 'home/prueba.html'
+```
+
+Ahora vamos a importar dentro de este mismo uno de los complementos que tienen las vistas genericas la cual seria LISTVIEWS, esto se utilizara para listar información de Db, como complemento se pueden utilizar snnipets que ayudan a acortar tiempo de digitación, esta extensión se instala en VsCode y se llama **djaneiro** y dentro del archivo de **views.py** escribimos la palabra `List`, con solo esto ya nos importa lo necesario para terminar de completar quedando asi
+
+```
+from django.shortcuts import render
+
+# Create your views here.
+from django.views.generic import TemplateView, ListView
+
+class PruebaView(TemplateView):
+    template_name= 'home/prueba.html'
+
+
+    
+class MODEL_NAMEListView(ListView):
+    model = MODEL_NAME
+    template_name = "TEMPLATE_NAME"
+    
+```
+
+Ahora lo que queda es reemplazar lo que nos trajo por defecto el Snnipet, para este ejemplo se renombra la clase como `PruebaListView`, por el momento no estamos trabaajando con modelos que es lo que nos traera directamente la base de datos asi que podemos utilizar una variable llamada `queryset` y para que pueda ser reconocido este querySet en el cual crearemos un array o una lista del 0 al 40 debemos utilizar algo para nombrarlo llamado `context_object_name` y asi mmismo crear un nuevo archivo html que se llamara **lista.html** el cual crearemos dentro de la carpeta **templates**, por el momento el archivo queda asi 
+
+```
+from django.shortcuts import render
+
+# Create your views here.
+from django.views.generic import TemplateView, ListView
+
+class PruebaView(TemplateView):
+    template_name= 'home/prueba.html'
+
+
+    
+class PruebaListaView(ListView):
+    template_name = 'home/lista.html'
+    context_object_name='listaNumeros'
+    queryset=['0','10','20','30','40']
+
+```
+
+Despues debemos llamar la clase y crear un path en el archivo urls.py de la aplicación, tampoco se debe olvidar crear el html dentro de la carpeta templates el cual se llama **lista.html**
+
+y por ultimo podemos hacer una prueba colocando algo con una etiqueta html en **lista.html** y para poder llamar esa variable queryset es decir ese arreglo debemos interpolar ese objeto que nombramos ocmo `listaNumeros`, para poder interpolar en el html lo unico que debemos hacer es llamar a la variable entre 2 llaves `{{ listaNumeros }}` quedando el html de la siguiente forma
+
+```
+<h1>Prueba de lista</h1>
+
+{{ listaNumeros }}
 ```
